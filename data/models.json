@@ -1,0 +1,266 @@
+{
+  "schema_version": 1,
+  "checked_on": "2026-11-04",
+  "base_model": "Qwen3-Coder-30B-A3B-Instruct",
+  "base_quant": "Q4_K_S",
+  "total_parameters_b": 30.5,
+  "active_parameters_b": 3.3,
+  "native_context_tokens": 262144,
+  "license": "Apache-2.0",
+  "quant_sizes_gb": {
+    "IQ3_XXS": 12.85,
+    "Q3_K_S": 13.29,
+    "Q3_K_M": 14.71,
+    "IQ4_XS": 16.38,
+    "Q4_K_S": 17.46,
+    "Q4_K_M": 18.56,
+    "UD_Q4_K_XL": 17.67,
+    "Q5_K_S": 21.08,
+    "Q5_K_M": 21.73,
+    "Q6_K": 25.09
+  },
+  "kv_cache": {
+    "kib_per_token_fp16": 96,
+    "note": "48 layers x 4 KV heads x 128 head_dim x 2 (K+V) x 2 bytes = 96 KiB/token",
+    "q8_0_multiplier": 0.5,
+    "q4_0_multiplier": 0.25
+  },
+  "tiers": [
+    {
+      "id": "discrete-12",
+      "applies_to": ["discrete"],
+      "min_memory_gb": 12,
+      "max_memory_gb": 15.9,
+      "quant": "IQ3_XXS",
+      "context_k": 8,
+      "est_decode_tps_low": 18,
+      "est_decode_tps_high": 25,
+      "alternative_quant": "Q3_K_S",
+      "note": "Partial offload; keep attention and KV on GPU."
+    },
+    {
+      "id": "discrete-16",
+      "applies_to": ["discrete"],
+      "min_memory_gb": 16,
+      "max_memory_gb": 23.9,
+      "quant": "Q3_K_M",
+      "context_k": 8,
+      "est_decode_tps_low": 40,
+      "est_decode_tps_high": 60,
+      "alternative_quant": "Q4_K_S (partial offload)",
+      "alternative_est_decode_tps_low": 35,
+      "alternative_est_decode_tps_high": 50,
+      "note": "Q3_K_M usually fits at 8k but may spill slightly; Q4_K_S is smarter but needs ~2-3 GB of expert offload and 64 GB system RAM."
+    },
+    {
+      "id": "discrete-24",
+      "applies_to": ["discrete"],
+      "min_memory_gb": 24,
+      "max_memory_gb": 31.9,
+      "quant": "Q4_K_S",
+      "context_k": 32,
+      "est_decode_tps_low": 75,
+      "est_decode_tps_high": 170,
+      "alternative_quant": "Q4_K_M",
+      "alternative_est_decode_tps_low": 70,
+      "alternative_est_decode_tps_high": 160,
+      "note": "Full GPU fit; speed depends on card bandwidth (RX 7900 XTX ~80, RTX 3090 ~100, RTX 4090 ~150)."
+    },
+    {
+      "id": "discrete-32",
+      "applies_to": ["discrete"],
+      "min_memory_gb": 32,
+      "max_memory_gb": 47.9,
+      "quant": "Q4_K_S",
+      "context_k": 64,
+      "est_decode_tps_low": 180,
+      "est_decode_tps_high": 240,
+      "alternative_quant": "Q5_K_M",
+      "alternative_est_decode_tps_low": 150,
+      "alternative_est_decode_tps_high": 200,
+      "note": "RTX 5090-class bandwidth; fast but expensive in 2026."
+    },
+    {
+      "id": "discrete-48",
+      "applies_to": ["discrete"],
+      "min_memory_gb": 48,
+      "max_memory_gb": 1024,
+      "quant": "Q6_K",
+      "context_k": 128,
+      "est_decode_tps_low": 55,
+      "est_decode_tps_high": 100,
+      "alternative_quant": "Q5_K_M",
+      "alternative_est_decode_tps_low": 55,
+      "alternative_est_decode_tps_high": 100,
+      "note": "Capacity tier; speed depends on the card (RTX 8000 vs A6000)."
+    },
+    {
+      "id": "unified-32",
+      "applies_to": ["unified"],
+      "min_memory_gb": 32,
+      "max_memory_gb": 35.9,
+      "quant": "Q4_K_S",
+      "context_k": 32,
+      "est_decode_tps_low": 28,
+      "est_decode_tps_high": 35,
+      "alternative_quant": "Q3_K_M",
+      "note": "Low-bandwidth LPDDR5 UMA (~120 GB/s); reserve 6-8 GB for the OS. No current in-scope system uses this tier."
+    },
+    {
+      "id": "unified-36",
+      "applies_to": ["unified"],
+      "min_memory_gb": 36,
+      "max_memory_gb": 47.9,
+      "quant": "Q4_K_M",
+      "context_k": 64,
+      "est_decode_tps_low": 55,
+      "est_decode_tps_high": 80,
+      "alternative_quant": "Q4_K_S",
+      "note": "High-bandwidth UMA (~410 GB/s); quiet and low power. No current in-scope system uses this tier."
+    },
+    {
+      "id": "unified-48",
+      "applies_to": ["unified"],
+      "min_memory_gb": 48,
+      "max_memory_gb": 63.9,
+      "quant": "Q5_K_M",
+      "context_k": 128,
+      "est_decode_tps_low": 60,
+      "est_decode_tps_high": 90,
+      "alternative_quant": "Q6_K",
+      "note": "Quality + long context without offload."
+    },
+    {
+      "id": "unified-64",
+      "applies_to": ["unified"],
+      "min_memory_gb": 64,
+      "max_memory_gb": 127.9,
+      "quant": "Q6_K",
+      "context_k": 128,
+      "est_decode_tps_low": 60,
+      "est_decode_tps_high": 90,
+      "alternative_quant": "Q5_K_M",
+      "note": "128-256k context is practical; good for whole-repo agents."
+    },
+    {
+      "id": "unified-128",
+      "applies_to": ["unified"],
+      "min_memory_gb": 128,
+      "max_memory_gb": 1024,
+      "quant": "Q6_K",
+      "context_k": 256,
+      "est_decode_tps_low": 60,
+      "est_decode_tps_high": 75,
+      "alternative_quant": "Qwen3-Coder-Next 80B-A3B Q4",
+      "note": "Runs the 30B at full context and can also run ~48 GB 80B MoE models."
+    },
+    {
+      "id": "cpu",
+      "applies_to": ["cpu"],
+      "min_memory_gb": 32,
+      "max_memory_gb": 1024,
+      "quant": "Q4_K_S",
+      "context_k": 8,
+      "est_decode_tps_low": 8,
+      "est_decode_tps_high": 15,
+      "alternative_quant": "Q3_K_M",
+      "note": "Cheap but slow; prefill makes agentic coding painful."
+    }
+  ],
+  "alternatives": [
+    {
+      "id": "qwen3-coder-next-80b-a3b",
+      "name": "Qwen3-Coder-Next 80B-A3B",
+      "quant": "Q4_K_M",
+      "size_gb": 48,
+      "min_memory_gb": 64,
+      "est_decode_tps_low": 20,
+      "est_decode_tps_high": 40,
+      "note": "Quality upgrade for 128 GB unified or 48 GB+ VRAM; not a speed upgrade."
+    },
+    {
+      "id": "qwen3.6-35b-a3b",
+      "name": "Qwen3.6-35B-A3B",
+      "quant": "Q4_K_M",
+      "size_gb": 20,
+      "min_memory_gb": 24,
+      "est_decode_tps_low": 30,
+      "est_decode_tps_high": 100,
+      "note": "Newer generation; verify tool-calling support in your client."
+    },
+    {
+      "id": "qwen3.6-27b",
+      "name": "Qwen3.6-27B (dense)",
+      "quant": "Q4_K_M",
+      "size_gb": 16,
+      "min_memory_gb": 24,
+      "est_decode_tps_low": 35,
+      "est_decode_tps_high": 45,
+      "note": "Dense model; ~40 t/s on RTX 3090, slower than the MoE."
+    },
+    {
+      "id": "qwen2.5-coder-32b",
+      "name": "Qwen2.5-Coder-32B-Instruct (dense)",
+      "quant": "Q4_K_M",
+      "size_gb": 20,
+      "min_memory_gb": 24,
+      "est_decode_tps_low": 30,
+      "est_decode_tps_high": 40,
+      "note": "Mature and well supported; slower than the 30B-A3B."
+    },
+    {
+      "id": "devstral-small-24b",
+      "name": "Devstral-Small-24B",
+      "quant": "Q4_K_M",
+      "size_gb": 14,
+      "min_memory_gb": 16,
+      "est_decode_tps_low": 35,
+      "est_decode_tps_high": 50,
+      "note": "Strong agentic coding in a smaller package."
+    },
+    {
+      "id": "qwen2.5-coder-14b",
+      "name": "Qwen2.5-Coder-14B-Instruct",
+      "quant": "Q4_K_M",
+      "size_gb": 9,
+      "min_memory_gb": 12,
+      "est_decode_tps_low": 45,
+      "est_decode_tps_high": 60,
+      "note": "Low-VRAM fallback; lower quality."
+    },
+    {
+      "id": "gpt-oss-20b",
+      "name": "gpt-oss-20B",
+      "quant": "MXFP4",
+      "size_gb": 12,
+      "min_memory_gb": 16,
+      "est_decode_tps_low": 50,
+      "est_decode_tps_high": 80,
+      "note": "Fast tool use; weaker long-form coding."
+    },
+    {
+      "id": "glm-4.5-air",
+      "name": "GLM-4.5-Air 106B-A12B",
+      "quant": "Q4_K_M",
+      "size_gb": 60,
+      "min_memory_gb": 128,
+      "est_decode_tps_low": 15,
+      "est_decode_tps_high": 25,
+      "note": "Big-memory box; stronger but much slower."
+    }
+  ],
+  "sampling": {
+    "temperature": 0.7,
+    "top_p": 0.8,
+    "top_k": 20,
+    "repeat_penalty": 1.05,
+    "note": "Official Qwen3-Coder recommendation. Use temperature 0.2-0.4 for deterministic refactors."
+  },
+  "runtime_notes": [
+    "Start with 32k context; raise to 64k only if needed.",
+    "Use q8_0 KV cache to halve KV memory at a small quality cost.",
+    "Enable flash attention.",
+    "On 12-16 GB cards, keep attention/KV on GPU and offload only expert tensors.",
+    "Strix Halo: use a recent ROCm build with rocWMMA."
+  ]
+}
