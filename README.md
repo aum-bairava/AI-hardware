@@ -2,8 +2,8 @@
 
 **Find a low-cost Linux machine that runs [Qwen3-Coder-30B-A3B-Instruct](https://huggingface.co/Qwen/Qwen3-Coder-30B-A3B-Instruct) at Q4_K_S fast enough for real coding.**
 
-> **Price snapshot: 4 November 2026 · USD · Walmart / Amazon (new or renewed) · $1,000–$3,000 target.**
-> Every price is a dated snapshot, not a live quote. Anything older than **14 days** is stale. Confirm the link before buying.
+> **Price snapshot: weekly updates via GitHub Actions · USD · Walmart / Amazon (new or excellent refurbished) / Web search fallback · $1,000–$3,000 target.**
+> Prioritize new or excellent refurbished from Walmart/Amazon with insurance/warranty options. If not found there, search the web. Weekly snapshots are saved to the repo; **always verify current prices with the seller**. Anything older than **14 days** is marked stale.
 
 ## The target
 
@@ -20,10 +20,10 @@
 ## Scope and assumptions
 
 - **Linux-first.** macOS-only hardware is excluded. If you relax that constraint, a $1,949 refurb Mac Studio M4 Max is still the best overall value in this market — see the note at the bottom.
-- **Walmart and Amazon only**, new or **Amazon Renewed** / Walmart refurbished. No eBay, Craigslist, or Facebook Marketplace in the default catalog.
+- **Walmart and Amazon first**, new or **excellent refurbished** (Amazon Renewed/Walmart refurbished) with insurance/warranty options. **Web search fallback** via Brave if not found on Walmart/Amazon.
 - **$1,000–$3,000** target. Cheaper entry points are listed separately; over-budget cards are marked as reference.
 - **One user, one request at a time.** No batching or multi-user serving.
-- **Estimates, not measurements.** Expect ±30% depending on context, backend, and thermals.
+- **Estimates, not measurements.** AI compute metrics (tokens/s, prefill, TTFT, offload) are estimated only — not guaranteed. Expect ±30% depending on context, backend, and thermals.
 
 ## Quick picks — 4 November 2026
 
@@ -37,7 +37,7 @@
 
 ## Compare systems
 
-All figures are **estimates for Qwen3-Coder-30B-A3B Q4_K_S at 32k context**, single request, no batching. “Value” is estimated decode tokens/s per $1,000 of purchase price. Prices are dated **2026-11-04**.
+Speeds are **planning estimates for each system’s recommended quant and context** (the default target is Qwen3-Coder-30B-A3B Q4_K_S at 32k), single request, no batching. Per-system quant and context are shown on the comparison site and in [docs/HARDWARE.md](docs/HARDWARE.md). “Value” is estimated decode tokens/s per $1,000 of purchase price. Prices are dated **2026-11-04**.
 
 | System | Price | CPU | RAM | VRAM | Est. t/s | 500-tok | Value | Fit | Linux |
 |---|---:|---|---:|---:|---:|---:|---:|---|---|
@@ -79,18 +79,44 @@ Full quant sizes, context math, and alternatives: **[docs/MODELS.md](docs/MODELS
 - **Prefill favors NVIDIA.** If your agent pastes 50k-token repos into every request, a 3090/4090 processes the prompt 2–5× faster than a Mac or Strix Halo.
 - **Your Linux constraint has a cost.** The $1,949 Mac Studio M4 Max is faster, quieter, and lower-power than most x86 options here. Excluding it is a deliberate trade for Linux, CUDA/ROCm control, and upgradeability.
 
+## Comparison site
+
+`index.html` is a static GitHub Pages app. It reads `data/hardware.json` and `data/models.json`, filters and sorts the catalog, compares up to four systems, and shows the recommended quant/model plus estimated token output.
+
+**Features:**
+- Multi-select comparison (up to 4 systems) by price, CPU, RAM, VRAM, and estimated AI compute
+- AI compute metrics dropdown (decode/prefill/TTFT/reply times/value/offload/memory/power)
+- Built-in web search via [Brave](https://search.brave.com/) for hardware not found on Walmart/Amazon
+- Model recommendations via Brave Ask, focused on practical local coding models
+- Weekly price snapshots via GitHub Actions (committed to repo)
+- Stale price badges (>14 days) — always verify with the seller
+
+**Run it locally:**
+
+```bash
+python3 -m http.server 8000
+# open http://localhost:8000
+```
+
+Do not open `index.html` directly with `file://`; the browser will block the JSON fetch.
+
+**Deploy on GitHub Pages:** repository **Settings → Pages → Deploy from a branch → `main` / `(root)`**. The `.nojekyll` file keeps GitHub from processing the static assets. The page makes no external requests except loading the two JSON files and links to Brave/source sites.
+
 ## Repo map
 
 | Path | Contents |
 |---|---|
+| [index.html](index.html) | Static comparison site (GitHub Pages entry point) |
+| [assets/app.js](assets/app.js) | Filters, multi-select comparison, recommendations, URL state |
+| [assets/style.css](assets/style.css) | Responsive light/dark styling |
 | [docs/HARDWARE.md](docs/HARDWARE.md) | Full 2026-11-04 shortlist, per-system notes, sources, buying checklist |
 | [docs/MODELS.md](docs/MODELS.md) | Quant sizes, hardware fit, model recommendations, expected token output |
 | [docs/METHODOLOGY.md](docs/METHODOLOGY.md) | How “estimated AI compute” and token/s are calculated, with caveats |
-| [docs/COMPARISON-TOOL.md](docs/COMPARISON-TOOL.md) | Spec for the multi-select comparison UI (not built yet) |
+| [docs/COMPARISON-TOOL.md](docs/COMPARISON-TOOL.md) | Comparison UI spec, decisions, and acceptance checklist |
 | [docs/STACK-OPTIONS.md](docs/STACK-OPTIONS.md) | No-JS alternatives, PostgreSQL, free GitHub hosting, API/scraper reality check |
 | [docs/FAQ.md](docs/FAQ.md) | Short answers to the usual “is X enough?” questions |
-| [data/hardware.json](data/hardware.json) | Structured system data for the future comparison tool |
-| [data/models.json](data/models.json) | Structured quant/model/tier data |
+| [data/hardware.json](data/hardware.json) | Structured system data used by the comparison site |
+| [data/models.json](data/models.json) | Structured quant/model/tier data used by the site |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to add a system or refresh a price |
 
 ## How the estimates work
@@ -113,15 +139,11 @@ These are **planning estimates**, not measured benchmarks on every configuration
 4. “Renewed/refurbished” means Amazon Renewed or Walmart’s refurbished grade, with a return window and warranty stated.
 5. Tax, shipping, and RAM/SSD upgrades are called out separately.
 
-## Price refresh (planned, API-first)
+## Price refresh
 
-The repo currently uses manual dated snapshots. The confirmed free pipeline is:
-
-```
-GitHub Actions (cron) → Python affiliate-API client → Neon PostgreSQL → JSON export → GitHub Pages
-```
-
-This keeps the public site static and free while PostgreSQL stores price history. The gate is API access: Amazon Product Advertising API and Walmart’s affiliate API both require approval and impose rate/attribution rules. If access is denied, the fallback is manual verification, then a low-rate scraper only if you accept the ToS/blocking risk. See [docs/STACK-OPTIONS.md](docs/STACK-OPTIONS.md).
+- **Weekly snapshots:** GitHub Actions updates `checked_on` dates weekly and commits to the repo. This is a refresh signal — **users must verify current prices** with Walmart/Amazon/sellers.
+- **Live search:** Use the built-in Brave search to check current prices for specific hardware.
+- **Long-term (planned):** API-first pipeline via GitHub Actions → affiliate APIs → Neon PostgreSQL → JSON export → GitHub Pages. API access is being pursued; manual verification remains required. See [docs/STACK-OPTIONS.md](docs/STACK-OPTIONS.md).
 
 ## License
 

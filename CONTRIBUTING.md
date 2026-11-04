@@ -2,23 +2,26 @@
 
 This repo is a **dated, sourced buying guide**, not a deal aggregator. The most valuable contribution is a verified price on a machine that actually runs Qwen3-Coder-30B-A3B well.
 
-**Scope:** Linux systems, **Walmart or Amazon only**, new or renewed/refurbished. eBay, Craigslist, and Facebook Marketplace listings are out of scope for the default catalog.
+**Scope:** Linux systems, **Walmart or Amazon first** (new or excellent refurbished with insurance/warranty). **Web search (Brave) fallback** if not found on Walmart/Amazon. eBay, Craigslist, and Facebook Marketplace listings are generally out of scope unless they meet warranty/insurance criteria.
 
 ## Golden rules
 
 1. **Every price needs a date and a URL.** No link, no merge.
 2. **No stale prices.** A price older than 14 days is stale and must be re-checked.
-3. **State the condition.** New, renewed, manufacturer-refurbished, or retailer-refurbished.
-4. **State what is included.** GPU only? Full build? RAM? SSD? OS? Warranty?
+3. **State the condition.** New, excellent refurbished, renewed, manufacturer-refurbished, or retailer-refurbished. Prefer items with insurance/warranty options.
+4. **State what is included.** GPU only? Full build? RAM? SSD? OS? Warranty/insurance?
 5. **No affiliate links, referral codes, or sponsored placements.**
-6. **Estimates must be labeled as estimates.** Measured benchmarks are preferred and should include the command/settings and context length.
+6. **Estimates must be labeled as estimates.** AI compute metrics are estimated only. Measured benchmarks are preferred and should include the command/settings and context length.
+7. **Use Brave for discovery.** If a good deal isn't on Walmart/Amazon, search via Brave and verify warranty/insurance before adding.
 
 ## Add a system
 
 You only need to edit the data file and the two docs tables:
 
-1. `data/hardware.json` — add an object to the `systems` array.
+1. `data/hardware.json` — add an object to the `systems` array. The static site reads this file directly; no site edit is needed.
 2. `README.md` and `docs/HARDWARE.md` — add a row to each comparison table and a short note if the system is notable.
+
+Include `context_k` in the JSON object. It is the context length the recommended quant actually fits at on that machine.
 
 ### Required fields
 
@@ -31,16 +34,24 @@ You only need to edit the data file and the two docs tables:
 | `retailer` | `Amazon Renewed + parts` | Where the price came from (`Walmart`, `Amazon`, `Amazon Renewed`) |
 | `price_usd` | `2000` | Representative total price |
 | `price_low_usd` / `price_high_usd` | `1900` / `2100` | Realistic range |
+| `price_note` | `Renewed GPU + platform` | What the price includes and what it excludes |
 | `url` | `https://…` | Direct product or source |
 | `cpu` | `Intel Core i5-12400F` | Exact model |
 | `gpu` | `NVIDIA GeForce RTX 3090 24 GB` | Exact model and VRAM |
 | `ram_gb` | `32` | System RAM |
 | `vram_gb` | `24` | 0 for CPU-only; equal to RAM for unified |
+| `memory_type` | `GDDR6X + DDR4-3200` | GPU and system memory type |
 | `bandwidth_gbs` | `936` | GPU memory bandwidth, or system bandwidth for CPU-only |
-| `est_decode_tps` | `100` | Estimate for Qwen3-Coder-30B-A3B Q4_K_S |
+| `est_decode_tps` | `100` | Estimate for the recommended quant at `context_k` |
 | `est_prefill_tps` | `2000` | Order-of-magnitude estimate |
 | `fit` | `full` | `full`, `partial`, or `cpu` |
+| `context_k` | `32` | Context length (thousands) the recommended quant fits at |
 | `recommended_quant` | `Q4_K_S` | Best quant for the memory tier |
+| `recommended_model` | `Qwen3-Coder-30B-A3B-Instruct` | Model shown in the recommendation card |
+| `power_w` | `400` | Whole-system estimate under load |
+| `warranty` | `90 days (Amazon Renewed)` | Warranty or return window |
+| `linux_readiness` | `excellent` | `excellent`, `good`, `fair`, or `experimental` |
+| `linux_notes` | `Ubuntu 24.04 + NVIDIA 570+` | Driver/kernel caveats |
 | `checked_on` | `2026-11-04` | ISO date |
 | `source` | `retailer` | `manufacturer`, `retailer`, or `price-tracker` (no marketplace resellers) |
 
@@ -80,6 +91,7 @@ Not acceptable:
   ```
 
 - Use the efficiency table from the methodology. Do not invent a number.
+- Use Q4_K_S as the calibration baseline, then adjust within the quant uncertainty band (±5–15%) when the system’s recommended quant is Q3 or Q6.
 - If you have a **measured** benchmark, use it and add the source, quant, context, backend, and hardware details to the `notes` or a comment in the PR.
 - Round to the nearest whole token/s. Do not imply precision you do not have.
 - Keep `est_decode_tps` consistent with the tier table in `data/models.json`.

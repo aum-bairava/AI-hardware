@@ -1,6 +1,6 @@
 # Stack options — no-JavaScript alternatives, PostgreSQL, and free GitHub hosting
 
-> **Status: decisions made, implementation not started.** No application code has been written. This document answers the question: *what can replace a JavaScript-heavy app while using PostgreSQL and staying free on GitHub?*
+> **Status: static UI built; ingestion not started.** `index.html` and `assets/` implement the GitHub Pages comparison page against the dated JSON. Neon and the affiliate-API client are the next build step. This document records the alternatives and the decisions behind the stack.
 
 ## Decisions (2026-11-04)
 
@@ -332,16 +332,17 @@ If the affiliate APIs are not approved, the same pipeline runs from **manual sna
 
 ## Resolved questions
 
-1. **API access:** official affiliate APIs are the primary path; manual snapshots are the fallback.
+1. **API access:** official affiliate APIs are the primary path; manual snapshots are the fallback. Access is being applied for now.
 2. **PostgreSQL role:** Neon is the source of truth for listings, prices, and history; JSON is the published export.
 3. **Hosting:** GitHub Pages is the target; Streamlit/FastAPI remain alternatives only if that constraint is relaxed.
 4. **Freshness:** daily/6–24 h batch data is acceptable; live prices are not required.
 5. **Site type:** public buying guide, not an internal tool.
+6. **Build order:** static page first; ingestion second.
+7. **Max comparison:** 4 systems.
+8. **Model scope:** Qwen3-Coder-30B-A3B plus 80B/35B alternatives when they fit.
+9. **Region/currency:** US/USD.
 
 ## Still open
 
 1. How many products will you track? (10–50 is easy; 1,000+ needs a real pipeline.)
-2. Max comparison count: 3, 4, or unlimited?
-3. Model scope: only Qwen3-Coder-30B-A3B, or also 80B/35B alternatives?
-4. Region/currency: US/USD only, or multi-currency later?
-5. Build order: static page first, or API/Postgres ingestion first?
+2. Which affiliate API lands first: Amazon PA-API or Walmart?

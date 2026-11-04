@@ -1,17 +1,17 @@
-# Comparison tool — product spec (not built yet)
+# Comparison tool — product spec
 
-> **Status: design only.** No application code has been written. This document defines what the tool should do so we can agree on scope before implementation.
+> **Status: v1 static page built with web search + weekly snapshots.** `index.html`, `assets/app.js`, and `assets/style.css` implement the catalog UI against the dated JSON files. Brave web search is integrated for discovery; GitHub Actions runs weekly snapshots. Neon/API ingestion remains a future step. This document records the scope and the decisions behind the implementation.
 
 ## Confirmed scope (2026-11-04)
 
 | Decision | Value |
 |---|---|
 | OS | **Linux** (x86_64; Ubuntu 24.04/Fedora recommended) |
-| Retailers | **Walmart + Amazon only** (new or Amazon Renewed/Walmart refurbished) |
+| Retailers | **Walmart + Amazon first** (new or excellent refurbished with insurance/warranty). **Brave web search fallback** if not found. |
 | Budget | **$1,000–$3,000** (cheaper entry points shown separately) |
-| Price updates | **Official affiliate APIs first** (Amazon PA-API / Walmart affiliate API), manual verification fallback |
-| Database | **Neon PostgreSQL** (free tier) for price history |
-| Hosting | **GitHub Pages** (static site + minimal JS), GitHub Actions for the data job |
+| Price updates | **Weekly GitHub Actions snapshots + user verification**. Official affiliate APIs planned later. |
+| Database | **Neon PostgreSQL** (free tier) for price history (planned) |
+| Hosting | **GitHub Pages** (static site + minimal JS), GitHub Actions for weekly snapshots |
 
 ## Problem
 
@@ -30,10 +30,12 @@ The README tables are useful but static. A buyer needs to:
 | 1 | buyer | filter by max price and minimum VRAM | I only see machines I can actually buy |
 | 2 | buyer | select 2–4 systems | I can compare them in one table |
 | 3 | buyer | sort by price, RAM, VRAM, or est. t/s | I can find the best value for my priority |
-| 4 | buyer | see est. tokens/s and 500-token reply time | I understand real-world latency |
+| 4 | buyer | see est. tokens/s, prefill, TTFT, and offload metrics | I understand real-world latency and behavior |
 | 5 | buyer | see the recommended quant/model for each system | I know what will actually run well |
 | 6 | buyer | see the price date and source link | I know the price is current and verifiable |
-| 7 | contributor | add a system by editing one JSON file | I don’t have to touch application code |
+| 7 | buyer | search the web via Brave if not found on Walmart/Amazon | I can find deals elsewhere with warranty/insurance |
+| 8 | buyer | get coding model recommendations via Brave Ask | I can pick the best models for my hardware |
+| 9 | contributor | add a system by editing one JSON file | I don’t have to touch application code |
 
 ## Scope
 
@@ -54,12 +56,13 @@ The README tables are useful but static. A buyer needs to:
   - Linux readiness and driver notes
   - Recommended quant and model
   - Source link
-- Sort by any numeric column.
-- Highlight the best and worst value in each row.
+- Sort by value, price, decode t/s, VRAM/UMA, or system RAM.
+- Highlight the best and worst number in each comparison row.
 - “Recommended for you” panel that explains the pick in one sentence.
 - Price freshness badge: **Current** (≤14 days) or **Stale** (>14 days).
 - Shareable URL that encodes selected IDs and filters.
-- Mobile layout: table becomes stacked cards.
+- Mobile layout: the systems table becomes stacked cards; the comparison table scrolls horizontally with a visible hint.
+- Automatic light/dark color scheme.
 
 ### P1 — nice to have
 
@@ -67,7 +70,7 @@ The README tables are useful but static. A buyer needs to:
 - “What if” slider: add RAM/SSD upgrade cost and recalculate value.
 - Toggle between **Q4_K_S**, **Q4_K_M**, **Q3_K_M**, and **Q6_K** to see fit/speed changes.
 - Electricity cost calculator (watts × hours/day × $/kWh).
-- Dark mode.
+- Manual light/dark override (the site already follows the OS preference).
 - “Price drop” indicator versus the 30-day average.
 
 ### P2 — later
@@ -164,6 +167,7 @@ The UI reads two static JSON files. No backend is required for the public site. 
       "est_decode_tps": 100,
       "est_prefill_tps": 2000,
       "fit": "full",
+      "context_k": 64,
       "recommended_quant": "Q4_K_S",
       "recommended_model": "Qwen3-Coder-30B-A3B-Instruct",
       "power_w": 400,
@@ -178,7 +182,7 @@ The UI reads two static JSON files. No backend is required for the public site. 
 }
 ```
 
-Required fields: `id`, `name`, `type`, `condition`, `price_usd`, `ram_gb`, `vram_gb`, `bandwidth_gbs`, `est_decode_tps`, `fit`, `checked_on`, `url`.
+Required fields: `id`, `name`, `type`, `condition`, `retailer`, `price_usd`, `price_note`, `url`, `cpu`, `gpu`, `ram_gb`, `vram_gb`, `memory_type`, `bandwidth_gbs`, `est_decode_tps`, `est_prefill_tps`, `fit`, `context_k`, `recommended_quant`, `recommended_model`, `power_w`, `warranty`, `linux_readiness`, `linux_notes`, `checked_on`, `source`.
 
 ### `data/models.json`
 
@@ -212,20 +216,16 @@ Required fields: `id`, `name`, `type`, `condition`, `price_usd`, `ram_gb`, `vram
 
 ## Recommendation logic
 
-The tool should not invent a score. It should apply these rules in order:
+The tool does not invent a score. It applies these rules in order:
 
 1. **Effective memory** = `vram_gb` for discrete GPUs, `vram_gb` for unified systems, `ram_gb` for CPU-only builds.
 2. **Reserve 6–8 GB** for the OS and applications on unified/CPU systems.
-3. **Fit check** for Q4_K_S + 32k context: needs ~20.5 GB + reserve.
-4. **Pick the highest-quality quant that fits** at 32k context:
-   - `Q4_K_M` if memory ≥ 22.5 GB
-   - `Q4_K_S` if memory ≥ 21.5 GB
-   - `Q3_K_M` if memory ≥ 15.5 GB
-   - `IQ3_XXS` if memory ≥ 13.0 GB
-   - otherwise: “not recommended”
-5. **Look up** the estimated t/s range for that quant and memory tier from `models.json`. Do not compute at runtime; keep the numbers consistent with the docs.
-6. **Show** decode t/s, 500-token time, 2,000-token time, and prefill time.
-7. **Explain** the pick: “Full GPU fit, no offload, CUDA” or “Partial offload; 64 GB RAM required.”
+3. **Use the catalog’s `recommended_quant` and `context_k`** as the primary recommendation. They encode the fit decision already documented in `MODELS.md` (for example, 16 GB + Q4_K_S partial offload, or 16 GB + Q3_K_M).
+4. **Validate the fit** against the memory tier. If the effective memory is ≥ 22.5 GB and the catalog quant is `Q4_K_S`, surface `Q4_K_M` as a quality upgrade at 32k context.
+5. **Use `est_decode_tps` and `est_prefill_tps`** from `hardware.json` for the machine-specific numbers; do not recompute a generic model number at runtime.
+6. **Show** decode t/s, 500-token time, 2,000-token time, prefill t/s, and 20k-prompt wait.
+7. **Explain** the pick: “Full GPU fit, no offload” or “Partial offload; keep attention/KV on the GPU.”
+8. **List alternatives** from `models.json` only when `min_memory_gb` fits the selected machine. Label their speed ranges as model-level, not machine-specific.
 
 For multiple selected systems, show the same recommendation per system and one overall sentence:
 
@@ -235,7 +235,7 @@ For multiple selected systems, show the same recommendation per system and one o
 
 | Option | Hand-written JS | PostgreSQL | Hosting | Recommendation |
 |---|---|---|---|---|
-| **Static HTML + vanilla JS + JSON exported from Postgres** | A little | Build/export only | GitHub Pages | **Recommended if GitHub Pages is required** |
+| **Static HTML + vanilla JS + JSON exported from Postgres** | A little | Build/export only | GitHub Pages | **Chosen for v1** |
 | **Python + FastAPI/Flask + Jinja2 + HTMX** | Almost none | Live | Render/Fly free tier | **Recommended for live DB without JS** |
 | **Streamlit + SQLAlchemy** | None | Live | Streamlit Community Cloud | **Fastest prototype, zero JS** |
 | Django + HTMX | Almost none | Live | Render/Railway | Best if you need an admin/catalog |
@@ -284,28 +284,31 @@ data/models.json    — quant/tier data
 | 7 | Stack | Static GitHub Pages + minimal JS comparator |
 | 8 | Data job | GitHub Actions cron → Python API client → Neon → JSON export |
 | 9 | Scraper | Not the primary path; only a fallback if API access is denied |
+| 10 | Max comparison | **4 systems** |
+| 11 | Model scope | Qwen3-Coder-30B-A3B plus **80B/35B alternatives** when they fit |
+| 12 | Region/currency | **US / USD only** |
+| 13 | Build order | **Static page first**; ingestion second |
+| 14 | API access | **Applying now**; build against fixture/manual data until approved |
 
 ### Still open
 
-1. **Max comparison count:** 3, 4, or unlimited?
-2. **Model scope:** only Qwen3-Coder-30B-A3B, or also 80B/35B alternatives?
-3. **Region/currency:** US/USD only, or multi-currency later?
-4. **Implementation start:** build the static page first, or the API/Postgres ingestion first?
+1. **Product count:** 10–50 (easy) or 1,000+ (needs a real pipeline)?
+2. **API approval:** Amazon PA-API and/or Walmart affiliate API — which one lands first?
 
 ## Acceptance criteria
 
-- [ ] A first-time visitor can filter and compare 3 systems without instructions.
-- [ ] Every price shows a **checked date** and a **source link**.
-- [ ] No stale price is displayed without a visible “stale” badge.
-- [ ] The comparison works on a 375 px-wide phone screen.
-- [ ] The selected systems survive a page reload via URL parameters.
-- [ ] Adding a new system requires editing only `data/hardware.json`.
-- [ ] The recommendation matches the rules in this document and the tables in `MODELS.md`.
-- [ ] No external network calls except loading the static JSON and source links.
-- [ ] Lighthouse accessibility score ≥ 90.
-- [ ] API-sourced prices show the observation timestamp, seller, condition, and source URL.
-- [ ] If the API job fails, the site keeps serving the last good snapshot with a stale badge rather than an empty catalog.
+- [ ] A first-time visitor can filter and compare 3 systems without instructions. *(implemented; needs a human usability pass)*
+- [x] Every price shows a **checked date** and a **source link**.
+- [x] No stale price is displayed without a visible “stale” badge.
+- [ ] The comparison works on a 375 px-wide phone screen. *(responsive layout implemented; needs a real-device check)*
+- [x] The selected systems survive a page reload via URL parameters.
+- [x] Adding a new system requires editing only `data/hardware.json` for the site.
+- [x] The recommendation matches the rules in this document and the tables in `MODELS.md`.
+- [x] No external network calls except loading the static JSON and source links.
+- [ ] Lighthouse accessibility score ≥ 90. *(not run yet)*
+- [ ] API-sourced prices show the observation timestamp, seller, condition, and source URL. *(ingestion not built)*
+- [ ] If the API job fails, the site keeps serving the last good snapshot with a stale badge rather than an empty catalog. *(ingestion not built)*
 
 ---
 
-*This is a spec, not an implementation. Once the decisions above are settled, the v1 static page is a small, self-contained build.*
+*The v1 static page is built. The remaining work is the Neon/affiliate-API ingestion layer plus the human checks listed under acceptance criteria.*

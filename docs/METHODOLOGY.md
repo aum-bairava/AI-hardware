@@ -29,6 +29,8 @@ So a machine with 936 GB/s of effective bandwidth and 22% efficiency gives:
 
 The published RTX 3090 result is ~95 t/s at 32k context, so 0.20–0.22 is the right calibration. The formula is intentionally simple: it captures the dominant bottleneck (memory bandwidth) and ignores second-order effects (kernel launch overhead, attention cost, PCIe transfers, thermal throttling).
 
+System-level estimates use the catalog’s **recommended quant and context** for that machine. Q4_K_S is the baseline; when the recommendation is Q3 or Q6, the estimate is adjusted within the ±5–15% quantization band rather than recalculated from scratch.
+
 ### Efficiency factors
 
 | Platform | Efficiency | Notes |

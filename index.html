@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Hardware — Linux 30B coding machine comparison</title>
+  <meta name="description" content="Compare Walmart, Amazon (new/excellent refurbished), and web-found Linux systems for Qwen3-Coder-30B-A3B-Instruct Q4_K_S by price, CPU, RAM, VRAM, estimated AI compute, and recommended coding models.">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <div class="header-copy">
+        <p class="eyebrow">AI Hardware · Linux · Walmart / Amazon</p>
+        <h1>Find the cheapest Linux machine that runs Qwen3-Coder-30B-A3B fast enough to code.</h1>
+        <p class="lede">Compare systems by price, memory, estimated decode speed, and recommended quant. Every price is a dated snapshot, not a live quote.</p>
+      </div>
+      <div class="snapshot" id="snapshot" aria-live="polite">
+        <span class="muted">Loading snapshot…</span>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="wrap">
+    <noscript>
+      <p class="callout">This comparison tool needs JavaScript to read the JSON catalog. The full guide is still available on GitHub: <a href="https://github.com/aum-bairava/AI-hardware/blob/main/README.md">README</a>, <a href="https://github.com/aum-bairava/AI-hardware/blob/main/docs/HARDWARE.md">hardware shortlist</a>, and <a href="https://github.com/aum-bairava/AI-hardware/blob/main/docs/MODELS.md">model notes</a>.</p>
+    </noscript>
+
+    <p id="load-error" class="callout callout-error" hidden></p>
+
+    <section class="panel filters" aria-labelledby="filters-title">
+      <div class="panel-head">
+        <div>
+          <h2 id="filters-title">Filter systems</h2>
+          <p class="muted">Entry-level systems stay visible below $1,000; over-budget reference cards stay visible above $3,000.</p>
+        </div>
+        <button id="reset" class="ghost" type="button">Reset</button>
+      </div>
+
+      <form id="filters" class="filter-grid">
+        <label class="field">
+          <span>Search</span>
+          <input id="q" name="q" type="search" placeholder="e.g. 3090, Strix Halo, A4000" autocomplete="off">
+        </label>
+
+        <label class="field">
+          <span>Min price (USD)</span>
+          <input id="pmin" name="pmin" type="number" min="0" step="50" value="0" inputmode="numeric">
+        </label>
+
+        <label class="field">
+          <span>Max price (USD)</span>
+          <input id="pmax" name="pmax" type="number" min="0" step="50" value="4000" inputmode="numeric">
+        </label>
+
+        <label class="field">
+          <span>Min VRAM / UMA</span>
+          <select id="vram" name="vram">
+            <option value="0">Any</option>
+            <option value="12">12 GB</option>
+            <option value="16">16 GB</option>
+            <option value="24">24 GB</option>
+            <option value="48">48 GB</option>
+            <option value="128">128 GB</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Sort by</span>
+          <select id="sort" name="sort">
+            <option value="value-desc">Best value</option>
+            <option value="price-asc">Price: low to high</option>
+            <option value="price-desc">Price: high to low</option>
+            <option value="tps-desc">Fastest decode</option>
+            <option value="vram-desc">Most VRAM / UMA</option>
+            <option value="ram-desc">Most system RAM</option>
+            <option value="name-asc">Name</option>
+          </select>
+        </label>
+
+        <fieldset class="checks">
+          <legend>Condition</legend>
+          <label><input type="checkbox" name="condition" value="new" checked> New</label>
+          <label><input type="checkbox" name="condition" value="renewed" checked> Renewed</label>
+          <label><input type="checkbox" name="condition" value="refurbished" checked> Refurbished</label>
+        </fieldset>
+
+        <fieldset class="checks">
+          <legend>Fit</legend>
+          <label><input type="checkbox" name="fit" value="full" checked> Full</label>
+          <label><input type="checkbox" name="fit" value="partial" checked> Partial</label>
+          <label><input type="checkbox" name="fit" value="cpu" checked> CPU</label>
+        </fieldset>
+
+        <fieldset class="checks">
+          <legend>Linux readiness</legend>
+          <label><input type="checkbox" name="linux" value="excellent" checked> Excellent</label>
+          <label><input type="checkbox" name="linux" value="good" checked> Good</label>
+          <label><input type="checkbox" name="linux" value="fair" checked> Fair</label>
+          <label><input type="checkbox" name="linux" value="experimental" checked> Experimental</label>
+        </fieldset>
+      </form>
+
+      <p id="filter-count" class="muted" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="panel websearch" aria-labelledby="websearch-title">
+      <div class="panel-head">
+        <div>
+          <h2 id="websearch-title">Live web search (Brave)</h2>
+          <p class="muted">Search for hardware not found on Walmart/Amazon. Focus on new or excellent refurbished with insurance options. Verify prices on the seller's site.</p>
+        </div>
+      </div>
+      <div class="websearch-grid">
+        <label class="field">
+          <span>Search query</span>
+          <input id="websearch-q" type="search" placeholder="e.g. AMD Ryzen AI Max+ 395 mini PC 128GB price new refurbished" autocomplete="off">
+        </label>
+        <div class="websearch-actions">
+          <button id="websearch-brave" class="primary" type="button">Search on Brave</button>
+          <button id="websearch-ask" class="ghost" type="button">Ask Brave</button>
+        </div>
+      </div>
+      <p class="muted">Tip: Include "walmart" or "amazon" if you want to prioritize those retailers, or add "insurance warranty" to find coverage options.</p>
+    </section>
+
+    <section class="systems-section" aria-labelledby="systems-title">
+      <div class="section-head">
+        <div>
+          <h2 id="systems-title">Systems</h2>
+          <p class="muted">Check up to four systems to compare. Speeds are planning estimates for each machine’s recommended quant and context; the default target is Qwen3-Coder-30B-A3B Q4_K_S.</p>
+        </div>
+        <p class="legend"><span class="swatch swatch-best"></span> Best <span class="swatch swatch-worst"></span> Worst</p>
+      </div>
+
+      <div class="table-wrap systems-wrap">
+        <table class="systems-table" id="systems-table">
+          <caption class="sr-only">Linux systems that can run Qwen3-Coder-30B-A3B-Instruct, with dated Walmart and Amazon prices and estimated performance.</caption>
+          <thead>
+            <tr>
+              <th scope="col" class="check-col">Compare</th>
+              <th scope="col">System</th>
+              <th scope="col" class="num">Price</th>
+              <th scope="col" class="num">CPU</th>
+              <th scope="col" class="num">RAM</th>
+              <th scope="col" class="num">VRAM</th>
+              <th scope="col" class="num">Est. t/s</th>
+              <th scope="col" class="num">500-tok</th>
+              <th scope="col" class="num">Value</th>
+              <th scope="col">Fit</th>
+              <th scope="col">Linux</th>
+              <th scope="col">Source</th>
+            </tr>
+          </thead>
+          <tbody id="systems-body"></tbody>
+        </table>
+        <p id="empty" class="empty" hidden>No systems match these filters. Raise the max price or clear a condition.</p>
+      </div>
+    </section>
+
+    <section id="compare-section" class="compare-section" aria-labelledby="compare-title" hidden>
+      <div class="section-head">
+        <div>
+          <h2 id="compare-title">Side-by-side comparison</h2>
+          <p class="muted">Green marks the best number in a row; amber marks the worst. Estimates are planning numbers, not benchmarks.</p>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+          <label class="field" style="min-width:220px;">
+            <span>AI compute metric</span>
+            <select id="metric-select">
+              <option value="all" selected>All metrics</option>
+              <option value="decode">Decode (tokens/s)</option>
+              <option value="prefill">Prefill (tokens/s)</option>
+              <option value="ttft">Time to first token (20k)</option>
+              <option value="reply500">500-token reply time</option>
+              <option value="turn2000">2000-token turn time</option>
+              <option value="value">Value (t/s per $1k)</option>
+              <option value="offload">Offload / fit</option>
+              <option value="memory">Memory (RAM/VRAM/UMA)</option>
+              <option value="power">Power efficiency (W)</option>
+            </select>
+          </label>
+          <button id="compare-clear" class="ghost" type="button">Clear selection</button>
+        </div>
+      </div>
+      <p class="swipe-hint muted">On a narrow screen, swipe the table sideways.</p>
+      <div class="table-wrap">
+        <table class="compare-table" id="compare-table">
+          <caption class="sr-only">Comparison of selected systems</caption>
+        </table>
+      </div>
+    </section>
+
+    <section id="recommend-section" class="recommend-section" aria-labelledby="recommend-title" hidden>
+      <div class="section-head">
+        <div>
+          <h2 id="recommend-title">Recommended coding model</h2>
+          <p class="muted">Recommended for local coding on your selected hardware. Focus on practical, widely-used programming models for your memory tier.</p>
+        </div>
+        <button id="brave-models" class="ghost" type="button">Get recommendations from Brave</button>
+      </div>
+      <p id="overall-pick" class="overall-pick"></p>
+      <div id="recommend-grid" class="card-grid"></div>
+      <div class="panel" style="margin-top:16px;">
+        <div class="panel-head">
+          <div>
+            <h3>Brave search recommendations</h3>
+            <p class="muted">Click above to search Brave for up-to-date coding model recommendations for your selected hardware.</p>
+          </div>
+        </div>
+        <div id="brave-models-result" class="muted">No search performed yet.</div>
+      </div>
+    </section>
+
+    <aside class="callout">
+      <strong>How to read the numbers.</strong>
+      Decode speed is a memory-bandwidth estimate for a single request, calibrated from published benchmarks. Real results move by roughly ±30% with context length, backend, driver version, and thermals. Prices are dated snapshots from Walmart/Amazon new or renewed listings; re-check the source link before buying. See <a href="https://github.com/aum-bairava/AI-hardware/blob/main/docs/METHODOLOGY.md">the methodology</a>.
+    </aside>
+  </main>
+
+  <div class="tray" id="tray" hidden>
+    <div class="wrap tray-inner">
+      <div class="tray-copy">
+        <strong id="tray-count" aria-live="polite">0 selected</strong>
+        <span id="tray-names" class="muted"></span>
+      </div>
+      <div class="tray-actions">
+        <button id="compare-btn" class="primary" type="button">Compare</button>
+        <button id="tray-clear" class="ghost" type="button">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <p>Source data: <a href="data/hardware.json">data/hardware.json</a> and <a href="data/models.json">data/models.json</a>. Guide: <a href="https://github.com/aum-bairava/AI-hardware/blob/main/README.md">README</a> · <a href="https://github.com/aum-bairava/AI-hardware/blob/main/docs/HARDWARE.md">Hardware</a> · <a href="https://github.com/aum-bairava/AI-hardware/blob/main/docs/MODELS.md">Models</a> · <a href="https://github.com/aum-bairava/AI-hardware/blob/main/docs/FAQ.md">FAQ</a>.</p>
+      <p class="muted">MIT licensed. No affiliate links. Prices are dated snapshots.</p>
+    </div>
+  </footer>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>
