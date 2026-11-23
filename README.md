@@ -19,7 +19,8 @@
 
 ## Scope and assumptions
 
-- **Linux-first.** macOS-only hardware is excluded.
+- **Linux and open source first.** macOS-only hardware is excluded.
+- Updating pricing and removing outdated assumptions on AI searches. The cost of memory and VRAM has increased drastically.
 - *excellent refurbished** (Amazon Renewed/Walmart refurbished) with insurance/warranty options. **Web search fallback** via Brave if not found on Walmart/Amazon.
 - **$1,000–$3,000** target. Cheaper entry points are listed separately; over-budget cards are marked as reference.
 - **One user, one request at a time.** No batching or multi-user serving.
