@@ -19,8 +19,8 @@
 
 ## Scope and assumptions
 
-- **Linux-first.** macOS-only hardware is excluded. If you relax that constraint, a $1,949 refurb Mac Studio M4 Max is still the best overall value in this market — see the note at the bottom.
-- **Walmart and Amazon first**, new or **excellent refurbished** (Amazon Renewed/Walmart refurbished) with insurance/warranty options. **Web search fallback** via Brave if not found on Walmart/Amazon.
+- **Linux-first.** macOS-only hardware is excluded.
+- *excellent refurbished** (Amazon Renewed/Walmart refurbished) with insurance/warranty options. **Web search fallback** via Brave if not found on Walmart/Amazon.
 - **$1,000–$3,000** target. Cheaper entry points are listed separately; over-budget cards are marked as reference.
 - **One user, one request at a time.** No batching or multi-user serving.
 - **Estimates, not measurements.** AI compute metrics (tokens/s, prefill, TTFT, offload) are estimated only — not guaranteed. Expect ±30% depending on context, backend, and thermals.
